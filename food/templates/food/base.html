@@ -21,8 +21,20 @@
             <a class="nav-item mx-2" href="{% url 'food:create_item' %}">Add item</a>
             <a class="nav-item mx-2" href="#">Delete item</a>
             <a class="nav-item mx-2" href="#">View item</a>
+
+            {% if user.is_authenticated %}
+              <a href="{% url 'logout' %} " class="nav-item mx-2">Logout</a>
+              <a href="{% url 'profile' %} " class="nav-item mx-2">Profile</a>
+              {% else %}
+              <a href="{% url 'login' %}" class="nav-item mx-2">Login</a>
+              {% endif %}
         </div>
     </nav>
+    {% if messages %}
+       {% for m in messages %}
+          <div classs="alert alert-{{ message.tags}}">{{ m }}</div>
+       {% endfor %}
+    {% endif %}
     
     {% block body %}
     {% endblock %}
