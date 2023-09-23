@@ -1,0 +1,625 @@
+django-admin startproject mysite
+
+python manage.py runserver
+
+python manage.py startapp food
+
+
+add  app in setting.py  => INSTALLLED_APP[  'appname.apps.xyz']   , xyz(FoodConfig) is copy paste from app.pt,  
+                                                                    class FoodConfig(AppConfig):
+
+create database in model.py
+like class
+
+once we made some changes in model.py, execute
+-> python manage.py makemigartions foo
+-> python managge.py migrate
+
+       
+			to interact with python shell
+
+python managge.py shell
+
+
+=> from food.models import Item
+
+>>> Item.objects.all()     -> to get all saved objects
+<QuerySet []>
+
+ a=Item(item_name="Pizza",item_desc="chessy pizza",item_price=20)      -> to create obj
+>>> a.save()							       -> to save created obj
+>>> a.id								->  to get unig id of obj
+1
+>>> a.pk
+1
+
+>>> Item.objects.all()
+<QuerySet [<Item: Item object (1)>, <Item: Item object (2)>]>           -> output in   id formate
+
+
+
+
+				to get obj interms of its name
+
+we have to write one fun in model
+
+
+  def __self__(self):
+       return self.name
+
+
+>>> Item.objects.all()
+<QuerySet [<Item: Pizza>, <Item: burger>]>
+
+
+
+   to add our created model in admin panel
+
+
+from .models import Item
+
+
+admin.site.register(Item)     ->  in admin.py  
+
+
+
+
+
+  				 to use template
+
+we need to create one templates folder in app(food), and another folder(food) within template, them create template.html
+
+
+
+
+
+def index(request):
+    item_list=Item.objects.all()
+    context={
+        'item_list':item_list,
+    }
+    return return(request,'food/index.html,context)
+
+
+{% for i in item_list %}
+    
+<ul>
+    <li>
+        {{i.id}}--{{i.item_name}}
+    </li>
+
+</ul>
+    {% endfor %}
+
+
+
+				dynamic url
+
+   path('<int:item_id>/',views.detail,name='detail'),
+
+      or
+
+ <a href={% url 'detail' i.id %}> {{i.id}}--{{i.item_name}}</a>       it call   ->   path('<int:item_id>/',views.detail,name='detail'),
+]
+                 name     int
+
+
+
+
+
+					NAMESPACE  ->  used when we use multiple apps
+
+in urls.py
+app_name='food'   # for namespace     
+
+             <a href={% url 'food:detail' i.id %}> {{i.id}}--{{i.item_name}}</a>
+{% comment %}namespace   app name:internal link(name) {% endcomment %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+						STATIC FILES
+
+
+
+create static foleder in app, and create folder named with app in sttaic folder, then create css file
+
+
+{% load static %}             -> at 1st line of html
+
+<link rel="stylesheet" href="{% static 'food/style.css' %}">
+					'app/filename.css
+
+
+
+
+                                      base.html
+
+add common desgin code for all page
+
+then    {% block body %}
+
+        {% endblock %}
+
+
+                 in others html files
+
+
+{% extends "food/base.html" %}
+
+{% block body %}
+   /////  code
+{% endblock%}
+
+
+
+
+
+
+				FORMS
+`				-----
+
+
+create forms.py in food app
+
+from django import forms
+from .models import Item
+
+class ItemForm(forms.ModelForm):
+    class Meta:
+        model=Item
+        fields=['item_name','item_desc','item_price','item_img']
+        
+
+
+
+    html
+    -----
+
+<form method="POST">
+  {% csrf_token %}
+    {{ form }}
+  <button type="submit"> Save </button>
+</form>
+
+
+views.py
+--------
+from .forms import ItemForm
+
+def create_item(request):
+    form=ItemForm(request.POST)
+    
+    if form.is_valid():
+        form.save()
+        return redirect('food:index')  #namespacing
+    			'namespace:htmlfile'
+    return render(request,'food/item-form.html',{'form':form})
+                            directory/file.html
+
+
+
+
+
+				to update
+				---------
+
+ path('update/<int:id>',views.update_item,name='update_item'),
+
+
+
+
+def update_item(request,id):
+    item=Item.objects.get(id=id)     => get obj
+    form=ItemForm(request.POST or None, instance=item)            => create form and filled with obj of id
+    
+    if form.is_valid():
+        form.save()
+        return redirect('food:index')
+    
+    return render(request,'food/item-form.html',{'form':form})                    send form data
+
+
+
+
+				to delete
+```				---------
+
+
+def delete_item(request,id):
+    item=Item.objects.get(id=id)
+    
+    if request.method=='POST':
+        item.delete()
+        return redirect('food:index')
+    
+    return render(request,'food/delete-item.html',{'item':item})
+
+
+
+
+
+
+
+
+
+
+
+						USER AUTHENTICATION
+
+
+
+
+
+
+
+
+
+
+ fisrt we need create new app   -> users
+
+and register in setting.py in installed app      appname.apps.config..
+
+
+
+in url.py of mysite     =>  from users import views as user_views
+
+
+
+
+				in views.py   of users app
+				---------------------------
+
+from django.shortcuts import render
+
+# Create your views here.
+
+from django.contrib.auth.forms import UserCreationForm        -> give default register form
+
+
+def register(request):
+    form=UserCreationForm()                                      => create
+    return render(request,'users/register.html',{'form':form})
+
+
+
+
+
+---
+
+
+
+def register(request):
+    if request.method =='POST':
+        form=UserCreationForm(request.POST)
+        
+        if form.is_valid():
+	     form.save()
+            username=form.cleaned_data.get('useranme')
+            print(username)
+            messages.success(request,f'welcome {username},your account is created')
+            return redirect('food:index')
+    else:
+        form=UserCreationForm()
+    return render(request,'users/register.html',{'form':form})
+
+
+
+
+
+
+
+
+                        to add additinal imformation to form
+			--------------------------------------
+
+create forms.py in user app
+
+
+
+from django import forms
+from django.contrib.auth.models import User
+from django.contrib.auth.forms import UserCreationForm
+
+
+class RegisterForm(UserCreationForm):
+    email=forms.EmailInput
+    
+    class Meta:
+        model=User
+        fields =['username','password1','password2','email']
+
+
+
+
+views
+----
+
+
+
+from django.shortcuts import render,redirect
+
+# Create your views here.
+
+# from django.contrib.auth.forms import UserCreationForm
+from django.contrib import messages
+from .forms import RegisterForm
+
+def register(request):
+    if request.method =='POST':
+        form=RegisterForm(request.POST)
+	     ------------	
+        
+        if form.is_valid():
+            form.save()
+            username=form.cleaned_data.get('username')
+            print(username)
+            messages.success(request,f'welcome {username},your account is created')
+            return redirect('food:index')
+    else:
+        form=RegisterForm()
+	     --------------     
+    return render(request,'users/register.html',{'form':form})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		                 USER LOGIN 
+				-------------
+
+django provide builtin view for login
+
+->  in mysite url.py
+
+from django.contrib.auth import views as authentication_views
+
+ path('login/',authentication_views.LoginView.as_view(template_name='users/login.html'),name='login'),
+    path('logout/',authentication_views.LogoutView.as_view(template_name='users/logout.html'),name='logout')
+
+
+ no need to write view method for login and logout,  
+just we need to write login.html n logout.html(in users app within template folder) template to render the file
+
+
+	login.html
+        -----------
+
+<form method='POST'> 
+{% csrf_token %}
+{{ form }}
+
+<button type="submit"> Login </button>
+
+</form>
+
+   when we submit the form, it automatically redirect to user profile, but we dont hv profile right now, so we need to modify the redirect process in setting,py  
+
+
+=>   LOGIN_REDIRECT_URL='food:index'    -> redirect to index.html page
+
+
+
+
+
+
+             to check user is logged in or not
+	----------------------------------------------
+
+
+{% if user.is_authenticated %}
+              <a href="{% url 'logout' %} " class="nav-item mx-2"Logout</a>
+	<a href="{% url 'profile' %} " class="nav-item mx-2"profile</a>
+              {% else %}
+              <a href="{% url 'login' %}" class="nav-item mx-2">Login</a>
+              {% endif %}
+
+
+if user login,  then logout is display in navbar ,  it used in base,html
+
+
+
+
+         		  to get profile
+         		  ---------------
+
+
+
+ path('profile/',user_views.profile,name='profile'),      in mysite url.py
+
+
+
+
+     views.py
+   -------------
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def profile(request):
+    return render(request,'users/profile.html')
+
+we need to create profile.html in user
+
+ profile method working is restricted only when user is loggedin,  
+
+       this can made be uing   @login_required, and  from django.contrib.auth.decorators import login_required
+
+
+
+if user is not logged in and use profile url,  by default django redirect to some other url, 
+is modified by adding ->    
+LOGIN_URL='login'    in setting.py
+
+
+
+
+
+
+
+ 				profile
+			        --------
+
+from django.db import models
+from django.contrib.auth.models import User
+
+class Profile(models.Model):
+    user=models.OneToOneField(User,on_delete=models.CASCADE)
+    image=models.ImageField(default='profilepic.jpg',upload_to='profilr_pictures')
+    location=models.CharField(max_length=100)
+    
+    def __str__(Self):
+        return self.user.username
+
+
+
+make migrations ans register in admin.py  ->
+
+from .models import Profile
+admin.site.register(Profile)
+
+
+
+       to save imag in correct directory
+       -----------------------------------
+
+in setting.py
+
+
+import os
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+
+
+
+
+
+
+
+			 to create a profile automatically when user is registered
+			--------------------------------------------------------------
+
+
+create signals.py in users app
+
+
+
+from django.db.models.signals import post_save            -> receive post signals when user created
+from django.contrib.auth.models import User		  -> 
+from django.dispatch import receiver			  ->  to receive
+from .models import Profile				  ->  we need profile to create profile for user	
+
+@receiver(post_save,sender=User)
+def build_profile(sender,instance,created,**kwargs):
+    if created:
+        Profile.objects.create(user=instance)
+        
+
+@receiver(post_save,sender=User)
+def save_profile(sender,instance,**kwargs):
+    instance.profile.save()
+
+
+
+
+in app.py
+----------
+
+
+from django.apps import AppConfig
+
+
+class UsersConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'users'
+    
+    def ready(self):                                         => add these 2 lines
+        import users.signals
+
+
+
+
+
+                                 when we create item, add username who create(add) that item
+				-------------------------------------------------------------
+
+
+now i must add new field to class Item
+
+
+
+
+class Item(models.Model):
+    
+    def __str__(self):
+        return self.item_name
+    user_name=models.ForeignKey(User,on_delete=models.CASCADE,default=1)                     => new field
+    item_name=models.CharField(max_length=200)
+    item_desc=models.CharField(max_length=200)
+    item_price=models.IntegerField()
+    item_img=models.CharField(max_length=500)
+
+
+
+
+def create_item(request):
+    form=ItemForm(request.POST)
+    
+    if form.is_valid():
+        item = form.save(commit=False)
+            # Set the user_name field to the currently logged-in user.
+        item.user_name = request.user                                                   =>  we add username ro item
+	    # Now, save the item with the user_name field set.
+        item.save()
+        return redirect('food:index')  #namespacing
+    
+    return render(request,'food/item-form.html',{'form':form})
+
+
+
+
+
+                       to change sytle of django form style  (registrayion form)
+			--------------------------------------------------------
+
+
+                       {% csrf_token %} 
+                       {% comment %} {{form}} {% endcomment %}
+                       
+                         {% for field in form %}
+                            <div class="form-group">
+                                {{ field.name }}
+                                <br>
+                                {{ field }}
+
+                        {% endfor %}  
+
