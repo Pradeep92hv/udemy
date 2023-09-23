@@ -7,6 +7,7 @@ from .import views
 app_name='food'   # for namespace
 urlpatterns = [
   path('',views.index,name='index'),
+  # path('',views.IndexClassView.as_view(),name='index'),
   
    path('<int:id>/',views.detail,name='detail'),
    path('add/',views.create_item,name='create_item'),

@@ -16,7 +16,7 @@ def register(request):
             username=form.cleaned_data.get('username')
             print(username)
             messages.success(request,f'welcome {username},your account is created')
-            return redirect('food:login')
+            return redirect('login')
     else:
         form=RegisterForm()
         print('hi')

@@ -2,8 +2,10 @@ from django.shortcuts import render, redirect
 
 # Create your views here.
 from django.http import HttpResponse     # import http
-from .models import Item    # import  class , i means= db
+from .models import Item    # import  class , i mean db
 from .forms import ItemForm
+
+# from django.views.generic.list import ListView
 
 def index(request):
     # return HttpResponse("hello")
@@ -14,6 +16,13 @@ def index(request):
     return render(request,'food/index.html',context)
 
 
+# class IndexClassView(ListView):
+#     model=Item
+#     template_name='food/index.html'
+#     context_object_name='item_list'
+
+    
+    
 def detail(request,id):
     # return HttpResponse("id i: %s " %item_id )
     item=Item.objects.get(id=id)
@@ -29,7 +38,14 @@ def create_item(request):
     form=ItemForm(request.POST)
     
     if form.is_valid():
-        form.save()
+        item = form.save(commit=False)
+        print(item)
+            # Set the user_name field to the currently logged-in user.
+        item.user_name = request.user
+            
+            # Now, save the item with the user_name field set.
+        item.save()
+        print(item)
         return redirect('food:index')  #namespacing
     
     return render(request,'food/item-form.html',{'form':form})
